@@ -17,8 +17,7 @@ services:
     command:
       - --configFile=/etc/traefik/traefik.yaml
     ports:
-      - "80:80"       # all *.localhost traffic
-      - "8080:8080"   # traefik dashboard (http://localhost:8080)
+      - "80:80"       # all *.localhost traffic (incl. traefik.localhost dashboard)
     volumes:
       - ./traefik.yaml:/etc/traefik/traefik.yaml:ro
       - ./dynamic:/etc/traefik/dynamic:ro   # routing config, watched

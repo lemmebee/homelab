@@ -40,7 +40,7 @@ edits apply live without restarting Traefik.
 > (Alternative: set `DOCKER_MIN_API_VERSION=1.24` on the docker daemon and use
 > container labels instead. The file provider avoids touching the daemon.)
 
-Traefik dashboard: http://localhost:8080
+Traefik dashboard: http://traefik.localhost
 
 ## Prerequisites
 

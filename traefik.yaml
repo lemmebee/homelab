@@ -12,8 +12,7 @@ providers:
     watch: true                 # edits to routes.yaml apply live, no restart
 
 api:
-  dashboard: true
-  insecure: true                # dashboard on :8080
+  dashboard: true               # served at http://traefik.localhost (see dynamic/routes.yaml)
 
 log:
   level: INFO

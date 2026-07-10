@@ -16,6 +16,10 @@ http:
       rule: "Host(`entrypoint.localhost`)"
       entryPoints: [web]
       service: entrypoint
+    traefik:
+      rule: "Host(`traefik.localhost`)"
+      entryPoints: [web]
+      service: api@internal      # built-in dashboard/API service
 
   services:
     ouioui:
