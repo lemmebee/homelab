@@ -1,0 +1,19 @@
+# entrypoint-v2 — React/Vite static SPA (nginx, port 80)
+services:
+  entrypoint:
+    build:
+      context: ../../entrypoint-v2
+    image: homelab/entrypoint:latest
+    container_name: entrypoint
+    restart: unless-stopped
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.entrypoint.rule=Host(`entrypoint.localhost`)
+      - traefik.http.routers.entrypoint.entrypoints=web
+      - traefik.http.services.entrypoint.loadbalancer.server.port=80
+    networks:
+      - web
+
+networks:
+  web:
+    name: homelab

@@ -1,0 +1,27 @@
+# kashkul — Astro blog with admin editor (node, port 4321)
+# Content lives on the host so posts/media survive rebuilds and the admin
+# editor writes back to your working tree.
+services:
+  kashkul:
+    build:
+      context: ../../kashkul
+    image: homelab/kashkul:latest
+    container_name: kashkul
+    restart: unless-stopped
+    env_file:
+      - ../../kashkul/.env
+    volumes:
+      - ../../kashkul/src/content:/app/src/content
+      - ../../kashkul/public/media:/app/public/media
+      - ../../WordPress.2026-05-09.xml:/app/WordPress.2026-05-09.xml:ro
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.kashkul.rule=Host(`kashkul.localhost`)
+      - traefik.http.routers.kashkul.entrypoints=web
+      - traefik.http.services.kashkul.loadbalancer.server.port=4321
+    networks:
+      - web
+
+networks:
+  web:
+    name: homelab

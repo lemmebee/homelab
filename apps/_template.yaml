@@ -1,0 +1,30 @@
+# Template for a new app. Steps:
+#   1. cp apps/_template.yaml apps/<name>.yaml
+#   2. replace every NAME with your app slug, set the port and build context
+#   3. add `- apps/<name>.yaml` to include: in ../compose.yaml
+#   4. make rollout app=<name>
+services:
+  NAME:
+    build:
+      context: ../../NAME          # path to the app source (sibling of homelab/)
+    image: homelab/NAME:latest
+    container_name: NAME
+    restart: unless-stopped
+    # environment:
+    #   - KEY=${KEY:-}
+    # volumes:
+    #   - NAME-data:/data
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.NAME.rule=Host(`NAME.localhost`)
+      - traefik.http.routers.NAME.entrypoints=web
+      - traefik.http.services.NAME.loadbalancer.server.port=PORT   # container's listen port
+    networks:
+      - web
+
+# volumes:
+#   NAME-data:
+
+networks:
+  web:
+    name: homelab

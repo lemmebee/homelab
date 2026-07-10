@@ -1,0 +1,32 @@
+# Home-server root stack.
+#   docker compose up -d           # start proxy + all apps
+#   make rollout app=ouioui        # rebuild + restart one app
+#
+# Each app lives in apps/<name>.yaml and is pulled in via include below.
+# Add a new app: copy apps/_template.yaml, edit it, add it to this list.
+include:
+  - apps/entrypoint.yaml
+  - apps/kashkul.yaml
+  - apps/ouioui.yaml
+
+services:
+  traefik:
+    image: traefik:v3.1
+    container_name: homelab-traefik
+    restart: unless-stopped
+    command:
+      - --configFile=/etc/traefik/traefik.yaml
+    ports:
+      - "80:80"       # all *.localhost traffic
+      - "8080:8080"   # traefik dashboard (http://localhost:8080)
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik.yaml:/etc/traefik/traefik.yaml:ro
+    networks:
+      - web
+
+# Shared network. `name: homelab` fixes the real docker network name so
+# traefik.yaml can reference it directly.
+networks:
+  web:
+    name: homelab

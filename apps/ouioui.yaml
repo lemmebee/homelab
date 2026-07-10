@@ -1,0 +1,28 @@
+# ouioui — FastAPI French flashcards (uvicorn, port 8080)
+services:
+  ouioui:
+    build:
+      context: ../../ouioui
+    image: homelab/ouioui:latest
+    container_name: ouioui
+    restart: unless-stopped
+    environment:
+      - PORT=8080
+      - DB_PATH=/data/ouioui.db          # persisted, see volume below
+      - DEEPL_API_KEY=${DEEPL_API_KEY:-}
+    volumes:
+      - ouioui-data:/data
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.ouioui.rule=Host(`ouioui.localhost`)
+      - traefik.http.routers.ouioui.entrypoints=web
+      - traefik.http.services.ouioui.loadbalancer.server.port=8080
+    networks:
+      - web
+
+volumes:
+  ouioui-data:
+
+networks:
+  web:
+    name: homelab
