@@ -9,7 +9,9 @@ YAML file; rolling out a new version is one command.
 ```
 homelab/
 ├── compose.yaml        # proxy (traefik) + include: list of apps + shared network
-├── traefik.yaml        # proxy static config (routing is auto via labels)
+├── traefik.yaml        # proxy static config (uses the file provider)
+├── dynamic/
+│   └── routes.yaml     # per-app routers + services (Host -> container)
 ├── Makefile            # up / down / rollout / logs helpers
 ├── .env.example        # secrets referenced by apps (copy to .env)
 └── apps/
@@ -25,11 +27,18 @@ context. This repo only holds orchestration.
 
 ## How routing works
 
-[Traefik](https://traefik.io) watches the docker socket. Any container labeled
-`traefik.enable=true` with a `Host(...)` rule gets routed automatically — no
-proxy config edits per app. `*.localhost` already resolves to loopback on Linux
-and in browsers, so `http://ouioui.localhost` hits Traefik on `:80`, which
-forwards to the ouioui container.
+[Traefik](https://traefik.io) reads `dynamic/routes.yaml` (the **file
+provider**) — one router + service per app, mapping a `Host(...)` to a
+container name on the shared `homelab` network. `*.localhost` already resolves
+to loopback on Linux and in browsers, so `http://ouioui.localhost` hits Traefik
+on `:80`, which forwards to the ouioui container. `routes.yaml` is watched, so
+edits apply live without restarting Traefik.
+
+> We use the file provider, not Traefik's docker provider, because Docker
+> Engine 29 dropped the legacy API version (1.24) that Traefik's docker client
+> hardcodes — the docker provider errors with "client version 1.24 is too old".
+> (Alternative: set `DOCKER_MIN_API_VERSION=1.24` on the docker daemon and use
+> container labels instead. The file provider avoids touching the daemon.)
 
 Traefik dashboard: http://localhost:8080
 
@@ -75,9 +84,11 @@ This rebuilds the image and recreates only that container.
 
 1. `cp apps/_template.yaml apps/myapp.yaml`
 2. Edit it: replace `NAME` with the app slug, set build `context` (its source
-   dir) and the container `PORT`.
+   dir).
 3. Add `- apps/myapp.yaml` to the `include:` list in `compose.yaml`.
-4. `make rollout app=myapp` → live at `http://myapp.localhost`.
+4. Add a router + service for it in `dynamic/routes.yaml` (copy an existing
+   pair; point the service url at `http://myapp:<port>`).
+5. `make rollout app=myapp` → live at `http://myapp.localhost`.
 
 If the app has no Dockerfile, add one to its source dir first (see
 `../entrypoint-v2/Dockerfile` for a static-SPA example).

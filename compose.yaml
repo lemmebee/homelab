@@ -11,7 +11,7 @@ include:
 
 services:
   traefik:
-    image: traefik:v3.1
+    image: traefik:v3.5
     container_name: homelab-traefik
     restart: unless-stopped
     command:
@@ -20,8 +20,8 @@ services:
       - "80:80"       # all *.localhost traffic
       - "8080:8080"   # traefik dashboard (http://localhost:8080)
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./traefik.yaml:/etc/traefik/traefik.yaml:ro
+      - ./dynamic:/etc/traefik/dynamic:ro   # routing config, watched
     networks:
       - web
 

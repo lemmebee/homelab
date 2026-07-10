@@ -12,11 +12,7 @@ services:
       - DEEPL_API_KEY=${DEEPL_API_KEY:-}
     volumes:
       - ouioui-data:/data
-    labels:
-      - traefik.enable=true
-      - traefik.http.routers.ouioui.rule=Host(`ouioui.localhost`)
-      - traefik.http.routers.ouioui.entrypoints=web
-      - traefik.http.services.ouioui.loadbalancer.server.port=8080
+    # Routing lives in ../dynamic/routes.yaml (traefik file provider).
     networks:
       - web
 

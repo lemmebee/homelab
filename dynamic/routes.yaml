@@ -1,0 +1,32 @@
+# Traefik dynamic routing. One router + one service per app.
+# Services point at the container name on the shared `homelab` network.
+# Add an app: add a router and a service block below, then it's live
+# (watch: true — no restart needed). Keep in sync with apps/<name>.yaml.
+http:
+  routers:
+    ouioui:
+      rule: "Host(`ouioui.localhost`)"
+      entryPoints: [web]
+      service: ouioui
+    kashkul:
+      rule: "Host(`kashkul.localhost`)"
+      entryPoints: [web]
+      service: kashkul
+    entrypoint:
+      rule: "Host(`entrypoint.localhost`)"
+      entryPoints: [web]
+      service: entrypoint
+
+  services:
+    ouioui:
+      loadBalancer:
+        servers:
+          - url: "http://ouioui:8080"
+    kashkul:
+      loadBalancer:
+        servers:
+          - url: "http://kashkul:4321"
+    entrypoint:
+      loadBalancer:
+        servers:
+          - url: "http://entrypoint:80"

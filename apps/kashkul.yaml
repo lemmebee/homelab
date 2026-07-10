@@ -14,11 +14,7 @@ services:
       - ../../kashkul/src/content:/app/src/content
       - ../../kashkul/public/media:/app/public/media
       - ../../WordPress.2026-05-09.xml:/app/WordPress.2026-05-09.xml:ro
-    labels:
-      - traefik.enable=true
-      - traefik.http.routers.kashkul.rule=Host(`kashkul.localhost`)
-      - traefik.http.routers.kashkul.entrypoints=web
-      - traefik.http.services.kashkul.loadbalancer.server.port=4321
+    # Routing lives in ../dynamic/routes.yaml (traefik file provider).
     networks:
       - web
 

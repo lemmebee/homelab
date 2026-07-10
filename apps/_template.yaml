@@ -2,7 +2,8 @@
 #   1. cp apps/_template.yaml apps/<name>.yaml
 #   2. replace every NAME with your app slug, set the port and build context
 #   3. add `- apps/<name>.yaml` to include: in ../compose.yaml
-#   4. make rollout app=<name>
+#   4. add a router + service for it in ../dynamic/routes.yaml (see existing)
+#   5. make rollout app=<name>   ->   live at http://<name>.localhost
 services:
   NAME:
     build:
@@ -14,11 +15,6 @@ services:
     #   - KEY=${KEY:-}
     # volumes:
     #   - NAME-data:/data
-    labels:
-      - traefik.enable=true
-      - traefik.http.routers.NAME.rule=Host(`NAME.localhost`)
-      - traefik.http.routers.NAME.entrypoints=web
-      - traefik.http.services.NAME.loadbalancer.server.port=PORT   # container's listen port
     networks:
       - web
 

@@ -1,17 +1,19 @@
-# Traefik static config. Routes by Host header to containers labeled
-# traefik.enable=true. Add an app = add labels; no edit here needed.
+# Traefik static config.
+# Routes are defined in dynamic/routes.yaml (file provider). We use the file
+# provider instead of the docker provider because Docker Engine 29 dropped the
+# legacy API version (1.24) that Traefik's docker client hardcodes.
 entryPoints:
   web:
     address: ":80"
 
 providers:
-  docker:
-    exposedByDefault: false   # only routes containers with traefik.enable=true
-    network: homelab          # the shared docker network (see compose.yaml)
+  file:
+    directory: /etc/traefik/dynamic
+    watch: true                 # edits to routes.yaml apply live, no restart
 
 api:
   dashboard: true
-  insecure: true              # dashboard on :8080, localhost only
+  insecure: true                # dashboard on :8080
 
 log:
   level: INFO
