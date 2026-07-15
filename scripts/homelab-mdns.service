@@ -1,0 +1,14 @@
+[Unit]
+Description=Publish homelab app names as mDNS .local aliases
+Documentation=https://github.com/lemmebee/homelab
+After=network-online.target avahi-daemon.service
+Wants=network-online.target
+Requires=avahi-daemon.service
+
+[Service]
+ExecStart=/home/lemmebee/sources/homelab/scripts/mdns-aliases.sh
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

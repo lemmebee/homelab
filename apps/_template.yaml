@@ -4,6 +4,7 @@
 #   3. add `- apps/<name>.yaml` to include: in ../compose.yaml
 #   4. add a router + service for it in ../dynamic/routes.yaml (see existing)
 #   5. make rollout app=<name>   ->   live at http://<name>.localhost
+#   6. sudo systemctl restart homelab-mdns   ->   http://<name>.local on the LAN
 services:
   NAME:
     build:

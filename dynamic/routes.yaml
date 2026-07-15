@@ -2,22 +2,29 @@
 # Services point at the container name on the shared `homelab` network.
 # Add an app: add a router and a service block below, then it's live
 # (watch: true — no restart needed). Keep in sync with apps/<name>.yaml.
+#
+# Each router matches any host whose first label is the app name, so both
+# work with no per-host config:
+#   http://<app>.localhost              from this machine
+#   http://<app>.<lan-ip>.nip.io        from phones/laptops on the LAN
+# nip.io is public wildcard DNS: *.192.168.1.19.nip.io resolves to 192.168.1.19.
+# The regexp has no IP baked in, so a DHCP address change needs no edit here.
 http:
   routers:
     ouioui:
-      rule: "Host(`ouioui.localhost`)"
+      rule: 'HostRegexp(`^ouioui\..+$`)'
       entryPoints: [web]
       service: ouioui
     kashkul:
-      rule: "Host(`kashkul.localhost`)"
+      rule: 'HostRegexp(`^kashkul\..+$`)'
       entryPoints: [web]
       service: kashkul
     entrypoint:
-      rule: "Host(`entrypoint.localhost`)"
+      rule: 'HostRegexp(`^entrypoint\..+$`)'
       entryPoints: [web]
       service: entrypoint
     traefik:
-      rule: "Host(`traefik.localhost`)"
+      rule: 'HostRegexp(`^traefik\..+$`)'
       entryPoints: [web]
       service: api@internal      # built-in dashboard/API service
 

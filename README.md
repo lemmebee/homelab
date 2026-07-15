@@ -1,8 +1,9 @@
 # homelab
 
 Single repo that runs and manages self-hosted apps in containers, each on its
-own `*.localhost` domain, behind one reverse proxy. Adding an app is a small
-YAML file; rolling out a new version is one command.
+own domain (`*.localhost` here, `*.local` from anything else on the WiFi),
+behind one reverse proxy. Adding an app is a small YAML file; rolling out a new
+version is one command.
 
 ## Layout
 
@@ -13,6 +14,9 @@ homelab/
 ├── dynamic/
 │   └── routes.yaml     # per-app routers + services (Host -> container)
 ├── Makefile            # up / down / rollout / logs helpers
+├── scripts/
+│   ├── mdns-aliases.sh      # publishes <app>.local for the LAN
+│   └── homelab-mdns.service # systemd unit for it (make mdns-install)
 ├── .env.example        # secrets referenced by apps (copy to .env)
 └── apps/
     ├── _template.yaml  # copy this to add a new app
@@ -28,11 +32,45 @@ context. This repo only holds orchestration.
 ## How routing works
 
 [Traefik](https://traefik.io) reads `dynamic/routes.yaml` (the **file
-provider**) — one router + service per app, mapping a `Host(...)` to a
-container name on the shared `homelab` network. `*.localhost` already resolves
+provider**) — one router + service per app, mapping a host to a container name
+on the shared `homelab` network. Each router matches `HostRegexp(^<app>\..+$)`:
+any hostname whose first label is the app name. `*.localhost` already resolves
 to loopback on Linux and in browsers, so `http://ouioui.localhost` hits Traefik
 on `:80`, which forwards to the ouioui container. `routes.yaml` is watched, so
 edits apply live without restarting Traefik.
+
+### From phones and other devices on the LAN
+
+`*.localhost` only resolves on this machine. For the rest of the house the apps
+answer to short **mDNS** names instead:
+
+    http://ouioui.local        http://kashkul.local        http://entrypoint.local
+
+`scripts/mdns-aliases.sh` publishes one `<app>.local` alias per router in
+`dynamic/routes.yaml`, all pointing at this machine's LAN IP; Traefik then
+routes by Host header as usual. Install it once, it then runs at boot:
+
+```sh
+make mdns-install     # copies scripts/homelab-mdns.service, enables it (sudo)
+make mdns-status      # check it
+```
+
+The app list comes from `routes.yaml`, so a new app needs no edit here, just
+`sudo systemctl restart homelab-mdns`. The LAN IP is looked up at runtime and
+the service restarts itself if a DHCP renewal changes it, so no address is
+hardcoded anywhere in this repo.
+
+Resolving `.local` needs an mDNS client: built in on iOS, macOS and most Linux
+desktops (`avahi-daemon` must be running on this host). Android does not
+resolve `.local` reliably. As a fallback that works on anything with internet
+DNS, [nip.io](https://nip.io) maps `*.<ip>.nip.io` back to `<ip>`:
+
+    http://ouioui.192.168.1.19.nip.io
+
+Apps that ship their own Host allowlist need these domains added. `kashkul`
+runs the Astro dev server, whose Vite host check rejects unknown hosts with a
+403; its `astro.config.mjs` allows `.localhost`, `.local` and `.nip.io` under
+`vite.server.allowedHosts`.
 
 > We use the file provider, not Traefik's docker provider, because Docker
 > Engine 29 dropped the legacy API version (1.24) that Traefik's docker client
@@ -63,11 +101,12 @@ make logs app=kashkul     # tail one app (omit app= for all)
 
 Then open:
 
-| App        | URL                        |
-|------------|----------------------------|
-| entrypoint | http://entrypoint.localhost |
-| kashkul    | http://kashkul.localhost   |
-| ouioui     | http://ouioui.localhost    |
+| App        | This machine                | Phone / LAN              |
+|------------|-----------------------------|--------------------------|
+| entrypoint | http://entrypoint.localhost | http://entrypoint.local  |
+| kashkul    | http://kashkul.localhost    | http://kashkul.local     |
+| ouioui     | http://ouioui.localhost     | http://ouioui.local      |
+| traefik    | http://traefik.localhost    | http://traefik.local     |
 
 ## Rollout a new version
 
@@ -89,6 +128,8 @@ This rebuilds the image and recreates only that container.
 4. Add a router + service for it in `dynamic/routes.yaml` (copy an existing
    pair; point the service url at `http://myapp:<port>`).
 5. `make rollout app=myapp` → live at `http://myapp.localhost`.
+6. `sudo systemctl restart homelab-mdns` → also live at `http://myapp.local`
+   for the rest of the LAN.
 
 If the app has no Dockerfile, add one to its source dir first (see
 `../entrypoint-v2/Dockerfile` for a static-SPA example).

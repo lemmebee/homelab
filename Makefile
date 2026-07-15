@@ -1,6 +1,6 @@
 DC := docker compose
 
-.PHONY: up down restart ps logs rollout build pull clean
+.PHONY: up down restart ps logs rollout build pull clean mdns-install mdns-status
 
 up:            ## Start proxy + all apps
 	$(DC) up -d
@@ -26,6 +26,14 @@ build:         ## Rebuild image(s) without starting. app=<name> optional
 
 clean:         ## Stop and remove volumes (DESTROYS app data)
 	$(DC) down -v
+
+mdns-install:  ## Publish *.local names on the LAN at boot (needs sudo, once)
+	sudo cp scripts/homelab-mdns.service /etc/systemd/system/homelab-mdns.service
+	sudo systemctl daemon-reload
+	sudo systemctl enable --now homelab-mdns.service
+
+mdns-status:   ## Show the mDNS alias service state
+	systemctl status homelab-mdns.service --no-pager
 
 help:
 	@grep -E '^[a-z-]+:.*##' $(MAKEFILE_LIST) | sed 's/:.*##/\t/'
